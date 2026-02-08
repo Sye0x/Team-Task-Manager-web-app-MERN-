@@ -14,14 +14,23 @@ exports.register = async (req, res) => {
 
     res.status(200).json({ success: true, message: "Registered successfully" });
   } catch (err) {
+    console.log(err);
     res.status(400).json({ error: err.message });
   }
 };
 
 exports.login = (req, res) => {
-  res.json({ success: true, message: "Logged in", user: req.user });
+  try {
+    res.json({ success: true, message: "Logged in", user: req.user });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
 exports.me = (req, res) => {
-  res.json(req.user);
+  try {
+    res.json(req.user);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
