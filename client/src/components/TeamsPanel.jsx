@@ -301,6 +301,12 @@ export default function TeamsPanel() {
                       <span className="text-white text-sm">
                         {m.first_name} {m.last_name}
                       </span>
+                      <span className="text-white text-sm">
+                        {m.desc} {m.last_name}
+                      </span>
+                      <span className="text-white text-sm">
+                        {m.description}
+                      </span>
                       <button
                         onClick={() => removeMember(m.id)}
                         className="text-red-400 hover:text-red-300"

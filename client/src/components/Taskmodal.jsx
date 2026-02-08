@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/api";
 
-export default function TaskModal({ onClose }) {
+export default function TaskModal({ onClose, onCreated }) {
   const [teams, setTeams] = useState([]);
   const [members, setMembers] = useState([]);
 
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [teamId, setTeamId] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
 
   const [loadingTeams, setLoadingTeams] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  /* 🔹 Fetch teams */
+  /* Fetch teams */
   useEffect(() => {
     async function fetchTeams() {
       try {
@@ -30,7 +32,7 @@ export default function TaskModal({ onClose }) {
     fetchTeams();
   }, []);
 
-  /* 🔹 Fetch members when team changes */
+  /* Fetch members when team changes */
   useEffect(() => {
     if (!teamId) {
       setMembers([]);
@@ -41,9 +43,9 @@ export default function TaskModal({ onClose }) {
     async function fetchMembers() {
       try {
         setLoadingMembers(true);
-        const res = await api(`/team_member/${teamId}`);
+        const res = await api(`/teams/${teamId}/members`);
         setMembers(res);
-      } catch (e) {
+      } catch {
         setMembers([]);
       } finally {
         setLoadingMembers(false);
@@ -53,6 +55,39 @@ export default function TaskModal({ onClose }) {
     fetchMembers();
   }, [teamId]);
 
+  async function handleCreateTask() {
+    setError("");
+
+    if (!title.trim()) {
+      return setError("Task title is required");
+    }
+
+    if (!teamId) {
+      return setError("Please select a team");
+    }
+
+    try {
+      setSaving(true);
+
+      await api("/tasks", {
+        method: "POST",
+        body: JSON.stringify({
+          title,
+          description,
+          team_id: teamId,
+          assigned_to: assigneeId || null,
+        }),
+      });
+
+      onCreated?.();
+      onClose();
+    } catch {
+      setError("Failed to create task");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="bg-[#05080E] rounded-xl w-full max-w-md p-6 shadow-xl">
@@ -61,7 +96,7 @@ export default function TaskModal({ onClose }) {
         {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
 
         <div className="space-y-4">
-          {/* Task title */}
+          {/* Title */}
           <input
             placeholder="Task title"
             value={title}
@@ -70,56 +105,49 @@ export default function TaskModal({ onClose }) {
               focus:ring-2 focus:ring-sky-400 outline-none"
           />
 
+          {/* Description */}
+          <textarea
+            placeholder="Task description (optional)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+            className="w-full bg-black border border-gray-700 rounded-md px-3 py-2 text-sm text-white
+              focus:ring-2 focus:ring-sky-400 outline-none resize-none"
+          />
+
           {/* Teams */}
           <select
             value={teamId}
             onChange={(e) => setTeamId(e.target.value)}
-            disabled={loadingTeams || teams.length === 0}
-            className="w-full bg-black border border-gray-700 rounded-md px-3 py-2 text-sm text-white
-              disabled:opacity-50"
+            disabled={loadingTeams}
+            className="w-full bg-black border border-gray-700 rounded-md px-3 py-2 text-sm text-white"
           >
-            {loadingTeams ? (
-              <option value="">Loading teams...</option>
-            ) : teams.length === 0 ? (
-              <option value="" disabled>
-                No teams available
+            <option value="">Select team</option>
+            {teams.map((team) => (
+              <option key={team.id} value={team.id}>
+                {team.name}
               </option>
-            ) : (
-              <>
-                <option value="">Select team</option>
-                {teams.map((team) => (
-                  <option key={team.id} value={team.id}>
-                    {team.name}
-                  </option>
-                ))}
-              </>
-            )}
+            ))}
           </select>
 
-          {/* Members (depends on team) */}
+          {/* Members */}
           <select
             value={assigneeId}
             onChange={(e) => setAssigneeId(e.target.value)}
             disabled={!teamId || loadingMembers}
-            className="w-full bg-black border border-gray-700 rounded-md px-3 py-2 text-sm text-white
-              disabled:opacity-50"
+            className="w-full bg-black border border-gray-700 rounded-md px-3 py-2 text-sm text-white"
           >
-            {!loadingMembers && members.length === 0 ? (
-              <option value="" disabled>
-                {!teamId ? "Select team first" : "No team members"}
-              </option>
-            ) : (
-              <option value="">
-                {!teamId
-                  ? "Select team first"
-                  : loadingMembers
-                    ? "Loading members..."
-                    : "Assign to"}
-              </option>
-            )}
-            {members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {member.name}
+            <option value="">
+              {!teamId
+                ? "Select team first"
+                : loadingMembers
+                  ? "Loading members..."
+                  : "Unassigned"}
+            </option>
+
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.first_name} {m.last_name}
               </option>
             ))}
           </select>
@@ -133,8 +161,12 @@ export default function TaskModal({ onClose }) {
             Cancel
           </button>
 
-          <button className="bg-sky-500 hover:bg-sky-600 text-white text-sm px-4 py-2 rounded-md">
-            Save
+          <button
+            onClick={handleCreateTask}
+            disabled={saving}
+            className="bg-sky-500 hover:bg-sky-600 text-white text-sm px-4 py-2 rounded-md disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save"}
           </button>
         </div>
       </div>
