@@ -20,10 +20,15 @@ exports.getTasks = async (req, res) => {
 
   const result = await pool.query(
     `
-    SELECT tasks.*, users.email AS assigned_email
-    FROM tasks
-    LEFT JOIN users ON users.id = tasks.assigned_to
-    WHERE team_id = $1
+    SELECT 
+      t.*,
+      u.id AS assignee_id,
+      u.first_name,
+      u.last_name
+    FROM tasks t
+    LEFT JOIN users u ON u.id = t.assigned_to
+    WHERE t.team_id = $1
+    ORDER BY t.created_at DESC
     `,
     [team_id],
   );
@@ -32,17 +37,30 @@ exports.getTasks = async (req, res) => {
 };
 
 exports.updateTask = async (req, res) => {
-  const { assigned_to, completed } = req.body;
+  const { title, description, assigned_to } = req.body;
 
   const result = await pool.query(
     `
     UPDATE tasks
-    SET assigned_to = $1, completed = $2
-    WHERE id = $3
+    SET
+      title = $1,
+      description = $2,
+      assigned_to = $3
+    WHERE id = $4
     RETURNING *
     `,
-    [assigned_to, completed, req.params.id],
+    [title, description, assigned_to || null, req.params.id],
   );
 
   res.json(result.rows[0]);
+};
+
+// controllers/tasks.controller.js
+exports.deleteTask = async (req, res) => {
+  await pool.query("DELETE FROM tasks WHERE id = $1 AND created_by = $2", [
+    req.params.id,
+    req.user.id,
+  ]);
+
+  res.json({ success: true });
 };
