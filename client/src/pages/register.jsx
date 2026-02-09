@@ -13,12 +13,37 @@ export default function Register() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(""); // <-- New state for success
 
+  function validatePassword(password) {
+    const minLength = 8;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    if (password.length < minLength) {
+      return "Password must be at least 8 characters long.";
+    }
+    if (!hasUppercase) {
+      return "Password must contain at least one uppercase letter.";
+    }
+    if (!hasSymbol) {
+      return "Password must contain at least one symbol.";
+    }
+
+    return ""; // no error
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
 
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
+      setSuccess("");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
-      setSuccess(""); // Clear success if error occurs
+      setSuccess("");
       return;
     }
 
@@ -35,15 +60,13 @@ export default function Register() {
 
       if (!response.success) {
         setError("Registration failed. Try a different email.");
-        setSuccess(""); // Clear success
+        setSuccess("");
         return;
       }
 
-      // Success
       setError("");
       setSuccess("Registration successful! You can now log in.");
 
-      // Optional: clear form
       setFirstName("");
       setLastName("");
       setEmail("");
@@ -52,7 +75,7 @@ export default function Register() {
     } catch (err) {
       console.log("Registration error: catch", err);
       setError("Something went wrong. Please try again.");
-      setSuccess(""); // Clear success
+      setSuccess("");
     }
   }
 
@@ -144,6 +167,7 @@ export default function Register() {
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm pr-10
                   focus:outline-none focus:ring-2 focus:ring-sky-400 text-white"
               />
+
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -156,6 +180,11 @@ export default function Register() {
                 )}
               </button>
             </div>
+            {password && (
+              <p className="text-xs mt-1 text-red-500">
+                {validatePassword(password)}
+              </p>
+            )}
           </div>
 
           {/* Confirm Password */}
