@@ -9,7 +9,19 @@ export default function TasksPanel() {
   const [loading, setLoading] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
 
-  /* 🔹 Fetch teams */
+  const [activeTab, setActiveTab] = useState("my"); // "my" | "team"
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  // Fetch logged-in user
+  useEffect(() => {
+    async function fetchMe() {
+      const me = await api("/auth/me");
+      setCurrentUserId(me.id);
+    }
+    fetchMe();
+  }, []);
+
+  // Fetch teams
   useEffect(() => {
     async function fetchTeams() {
       const res = await api("/teams");
@@ -19,38 +31,73 @@ export default function TasksPanel() {
     fetchTeams();
   }, []);
 
-  /* 🔹 Fetch tasks per team */
-  useEffect(() => {
+  // Fetch tasks function
+  const fetchTasksForActiveTeam = async () => {
     if (!activeTeam) return;
-
-    async function fetchTasks() {
-      try {
-        setLoading(true);
-        const res = await api(`/tasks?team_id=${activeTeam}`);
-        setTasks(res);
-      } finally {
-        setLoading(false);
-      }
+    try {
+      setLoading(true);
+      const res = await api(`/tasks?team_id=${activeTeam}`);
+      setTasks(res);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    fetchTasks();
+  // Fetch tasks when active team changes
+  useEffect(() => {
+    fetchTasksForActiveTeam();
   }, [activeTeam]);
 
-  /* 🔹 Delete task */
+  // Delete task
   async function deleteTask(id) {
     if (!confirm("Delete this task?")) return;
 
     await api(`/tasks/${id}`, { method: "DELETE" });
-    setTasks(tasks.filter((t) => t.id !== id));
+    setTasks((prev) => prev.filter((t) => t.id !== id));
   }
 
-  /* 🔹 Optimistic update after edit */
+  // Update task after edit
   const handleTaskUpdated = (updatedTask) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)),
+      prev.map((t) => (t.id === updatedTask.id ? { ...t, ...updatedTask } : t)),
     );
     setEditingTask(null);
   };
+
+  // Toggle task complete/open
+  async function toggleTaskStatus(task, status) {
+    const newCompleted = status === "complete";
+
+    // Optimistic UI update
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === task.id ? { ...t, completed: newCompleted } : t,
+      ),
+    );
+
+    try {
+      // Backend sync
+      const updated = await api(`/tasks/status/${task.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ completed: newCompleted }),
+      });
+
+      // Merge response
+      setTasks((prev) =>
+        prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)),
+      );
+    } catch (err) {
+      // Rollback on error
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+    }
+  }
+
+  // Filter tasks by tab
+  const filteredTasks = tasks.filter((task) => {
+    if (!currentUserId) return true;
+    if (activeTab === "my") return task.assigned_to === currentUserId;
+    return task.assigned_to !== currentUserId;
+  });
 
   return (
     <div className="bg-[#05080E] rounded-xl p-5 shadow-lg">
@@ -58,27 +105,66 @@ export default function TasksPanel() {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-white text-sm font-semibold">Tasks</h2>
 
-        <select
-          value={activeTeam}
-          onChange={(e) => setActiveTeam(e.target.value)}
-          className="bg-black border border-gray-700 rounded-md px-3 py-1.5 text-sm text-white"
+        <div className="flex items-center gap-2">
+          <select
+            value={activeTeam}
+            onChange={(e) => setActiveTeam(e.target.value)}
+            className="bg-black border border-gray-700 rounded-md px-3 py-1.5 text-sm text-white"
+          >
+            {teams.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Reload button */}
+          <button
+            onClick={fetchTasksForActiveTeam}
+            className="bg-sky-500 hover:bg-sky-600 text-white text-sm px-3 py-1 rounded-md"
+          >
+            Reload
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setActiveTab("my")}
+          className={`px-3 py-1.5 text-xs rounded-md transition ${
+            activeTab === "my"
+              ? "bg-sky-500/20 text-sky-400"
+              : "bg-black text-gray-400 hover:text-white"
+          }`}
         >
-          {teams.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
-        </select>
+          My Tasks
+        </button>
+
+        <button
+          onClick={() => setActiveTab("team")}
+          className={`px-3 py-1.5 text-xs rounded-md transition ${
+            activeTab === "team"
+              ? "bg-sky-500/20 text-sky-400"
+              : "bg-black text-gray-400 hover:text-white"
+          }`}
+        >
+          Team Tasks
+        </button>
       </div>
 
       {/* Tasks */}
       {loading ? (
         <p className="text-gray-400 text-sm">Loading tasks...</p>
-      ) : tasks.length === 0 ? (
-        <p className="text-gray-500 text-sm">No tasks found</p>
+      ) : filteredTasks.length === 0 ? (
+        <p className="text-gray-500 text-sm">
+          {activeTab === "my"
+            ? "No tasks assigned to you"
+            : "No tasks assigned to team members"}
+        </p>
       ) : (
         <div className="space-y-3">
-          {tasks.map((task) => (
+          {filteredTasks.map((task) => (
             <div
               key={task.id}
               className="border border-gray-800 rounded-md p-4 hover:border-sky-500 transition"
@@ -103,21 +189,34 @@ export default function TasksPanel() {
                 </div>
 
                 <div className="flex gap-2">
-                  {/* Edit */}
-                  <button
-                    onClick={() => setEditingTask(task)}
-                    className="text-sky-400 text-xs hover:text-sky-300"
-                  >
-                    Edit
-                  </button>
+                  {activeTab === "my" && (
+                    <select
+                      value={task.completed ? "complete" : "open"}
+                      onChange={(e) => toggleTaskStatus(task, e.target.value)}
+                      className="text-xs px-2 py-1 rounded-md bg-gray-800 text-white"
+                    >
+                      <option value="open">Open</option>
+                      <option value="complete">Complete</option>
+                    </select>
+                  )}
 
-                  {/* Delete */}
-                  <button
-                    onClick={() => deleteTask(task.id)}
-                    className="text-red-400 text-xs hover:text-red-300"
-                  >
-                    Delete
-                  </button>
+                  {activeTab === "team" && (
+                    <>
+                      <button
+                        onClick={() => setEditingTask(task)}
+                        className="text-sky-400 text-xs hover:text-sky-300"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={() => deleteTask(task.id)}
+                        className="text-red-400 text-xs hover:text-red-300"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -140,14 +239,7 @@ export default function TasksPanel() {
         <EditTaskModal
           task={editingTask}
           onClose={() => setEditingTask(null)}
-          onUpdated={async () => {
-            // close modal
-            setEditingTask(null);
-
-            // re-fetch tasks for the active team
-            const updatedTasks = await api(`/tasks?team_id=${activeTeam}`);
-            setTasks(updatedTasks);
-          }}
+          onUpdated={handleTaskUpdated}
         />
       )}
     </div>
