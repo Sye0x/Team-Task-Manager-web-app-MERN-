@@ -4,6 +4,7 @@ import { api } from "../api/api";
 export default function TaskModal({ onClose, onCreated }) {
   const [teams, setTeams] = useState([]);
   const [members, setMembers] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -15,13 +16,30 @@ export default function TaskModal({ onClose, onCreated }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  /* Fetch teams */
+  /* 🔹 Fetch logged-in user */
   useEffect(() => {
+    async function fetchMe() {
+      const me = await api("/auth/me");
+      setCurrentUserId(me.id);
+    }
+    fetchMe();
+  }, []);
+
+  /* 🔹 Fetch teams (ONLY owned teams) */
+  useEffect(() => {
+    if (!currentUserId) return;
+
     async function fetchTeams() {
       try {
         setLoadingTeams(true);
         const res = await api("/teams");
-        setTeams(res);
+
+        // ✅ FILTER: show only teams owned by user
+        const ownedTeams = res.filter(
+          (team) => team.owner_id === currentUserId,
+        );
+
+        setTeams(ownedTeams);
       } catch {
         setTeams([]);
       } finally {
@@ -30,9 +48,9 @@ export default function TaskModal({ onClose, onCreated }) {
     }
 
     fetchTeams();
-  }, []);
+  }, [currentUserId]);
 
-  /* Fetch members when team changes */
+  /* 🔹 Fetch members when team changes */
   useEffect(() => {
     if (!teamId) {
       setMembers([]);
@@ -58,13 +76,8 @@ export default function TaskModal({ onClose, onCreated }) {
   async function handleCreateTask() {
     setError("");
 
-    if (!title.trim()) {
-      return setError("Task title is required");
-    }
-
-    if (!teamId) {
-      return setError("Please select a team");
-    }
+    if (!title.trim()) return setError("Task title is required");
+    if (!teamId) return setError("Please select a team");
 
     try {
       setSaving(true);
@@ -115,14 +128,17 @@ export default function TaskModal({ onClose, onCreated }) {
               focus:ring-2 focus:ring-sky-400 outline-none resize-none"
           />
 
-          {/* Teams */}
+          {/* Teams (OWNED ONLY) */}
           <select
             value={teamId}
             onChange={(e) => setTeamId(e.target.value)}
             disabled={loadingTeams}
             className="w-full bg-black border border-gray-700 rounded-md px-3 py-2 text-sm text-white"
           >
-            <option value="">Select team</option>
+            <option value="">
+              {loadingTeams ? "Loading teams..." : "Select your team"}
+            </option>
+
             {teams.map((team) => (
               <option key={team.id} value={team.id}>
                 {team.name}

@@ -34,3 +34,14 @@ exports.me = (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
+
+exports.logout = (req, res, next) => {
+  req.logout(function (err) {
+    if (err) return next(err);
+
+    req.session.destroy(() => {
+      res.clearCookie("connect.sid");
+      res.json({ success: true, message: "Logged out" });
+    });
+  });
+};

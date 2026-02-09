@@ -1,5 +1,6 @@
 const pool = require("../db");
 
+// Create a new task
 exports.createTask = async (req, res) => {
   const { title, description, team_id, assigned_to } = req.body;
 
@@ -15,6 +16,7 @@ exports.createTask = async (req, res) => {
   res.json(result.rows[0]);
 };
 
+// Get tasks for a team
 exports.getTasks = async (req, res) => {
   const { team_id } = req.query;
 
@@ -36,26 +38,44 @@ exports.getTasks = async (req, res) => {
   res.json(result.rows);
 };
 
+// Update a task (title, description, assigned_to, or completed)
 exports.updateTask = async (req, res) => {
-  const { title, description, assigned_to } = req.body;
+  const { title, description, assigned_to, completed } = req.body;
 
   const result = await pool.query(
     `
     UPDATE tasks
     SET
-      title = $1,
-      description = $2,
-      assigned_to = $3
-    WHERE id = $4
+      title = COALESCE($1, title),
+      description = COALESCE($2, description),
+      assigned_to = COALESCE($3, assigned_to),
+      completed = COALESCE($4, completed)
+    WHERE id = $5
     RETURNING *
     `,
-    [title, description, assigned_to || null, req.params.id],
+    [title, description, assigned_to, completed, req.params.id],
   );
 
   res.json(result.rows[0]);
 };
 
-// controllers/tasks.controller.js
+exports.updateTaskStatus = async (req, res) => {
+  const { completed } = req.body;
+
+  const result = await pool.query(
+    `
+    UPDATE tasks
+    SET completed = $1
+    WHERE id = $2
+    RETURNING *
+    `,
+    [completed, req.params.id],
+  );
+
+  res.json(result.rows[0]);
+};
+
+// Delete task (only creator can delete)
 exports.deleteTask = async (req, res) => {
   await pool.query("DELETE FROM tasks WHERE id = $1 AND created_by = $2", [
     req.params.id,
