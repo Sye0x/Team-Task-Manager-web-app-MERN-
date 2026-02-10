@@ -39,7 +39,6 @@ export default function TeamsPanel() {
     } else {
       document.body.style.overflow = "auto";
     }
-
     return () => {
       document.body.style.overflow = "auto";
     };
@@ -98,12 +97,14 @@ export default function TeamsPanel() {
       setLoadingUsers(false);
     }
   }
+
   function isOwner(team) {
     return currentUser?.id === team.owner_id;
   }
 
   // ================= ADD MEMBER =================
   async function addMember(user) {
+    if (!isOwner(activeTeam)) return; // extra safety check
     const res = await api(`/teams/${activeTeam.id}/members`, {
       method: "POST",
       body: JSON.stringify({ email: user.email }),
@@ -115,6 +116,7 @@ export default function TeamsPanel() {
 
   // ================= REMOVE MEMBER =================
   async function removeMember(userId) {
+    if (!isOwner(activeTeam)) return; // extra safety check
     await api(`/teams/${activeTeam.id}/members/${userId}`, {
       method: "DELETE",
     });
@@ -164,6 +166,7 @@ export default function TeamsPanel() {
           +
         </button>
       </div>
+
       {loadingTeams ? (
         <p className="text-gray-400 text-sm">Loading teams...</p>
       ) : (
@@ -204,6 +207,7 @@ export default function TeamsPanel() {
           ))}
         </ul>
       )}
+
       {/* ================= MEMBERS MODAL ================= */}
       {isMembersModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
@@ -230,120 +234,112 @@ export default function TeamsPanel() {
                     </p>
                     <p className="text-gray-400 text-xs">{m.email}</p>
                   </div>
-                  <button onClick={() => removeMember(m.id)}>
-                    <X className="w-4 h-4 text-red-400" />
-                  </button>
+                  {isOwner(activeTeam) && (
+                    <button onClick={() => removeMember(m.id)}>
+                      <X className="w-4 h-4 text-red-400" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
 
             {/* AVAILABLE USERS */}
-            <div>
-              <h4 className="text-gray-300 text-sm mb-2">Add Members</h4>
-              <div className="max-h-40 overflow-y-auto space-y-2">
-                {availableUsers.map((u) => (
-                  <div
-                    key={u.id}
-                    className="flex justify-between items-center bg-[#111827] px-3 py-2 rounded"
-                  >
-                    <div>
-                      <p className="text-white text-sm">
-                        {u.first_name} {u.last_name}
-                      </p>
-                      <p className="text-gray-400 text-xs">{u.email}</p>
+            {isOwner(activeTeam) && (
+              <div>
+                <h4 className="text-gray-300 text-sm mb-2">Add Members</h4>
+                <div className="max-h-40 overflow-y-auto space-y-2">
+                  {availableUsers.map((u) => (
+                    <div
+                      key={u.id}
+                      className="flex justify-between items-center bg-[#111827] px-3 py-2 rounded"
+                    >
+                      <div>
+                        <p className="text-white text-sm">
+                          {u.first_name} {u.last_name}
+                        </p>
+                        <p className="text-gray-400 text-xs">{u.email}</p>
+                      </div>
+                      <button onClick={() => addMember(u)}>
+                        <Cross className="w-4 h-4 text-sky-400" />
+                      </button>
                     </div>
-                    <button onClick={() => addMember(u)}>
-                      <Cross className="w-4 h-4 text-sky-400" />
-                    </button>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
-      {/* Create Modal */}{" "}
+
+      {/* ================= CREATE MODAL ================= */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          {" "}
           <div className="bg-[#0A101F] rounded-xl p-6 w-80">
-            {" "}
             <h3 className="text-white text-lg font-semibold mb-4">
-              {" "}
-              Create New Team{" "}
-            </h3>{" "}
+              Create New Team
+            </h3>
             <form onSubmit={handleCreateTeam} className="flex flex-col gap-3">
-              {" "}
               <input
                 type="text"
                 placeholder="Team name"
                 value={newTeamName}
                 onChange={(e) => setNewTeamName(e.target.value)}
                 className="px-3 py-2 rounded-md bg-[#1B2232] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              />{" "}
+              />
               <div className="flex justify-end gap-2">
-                {" "}
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
                   className="px-3 py-1 rounded-md bg-gray-700 text-white hover:bg-gray-600 transition"
                 >
-                  {" "}
-                  Cancel{" "}
-                </button>{" "}
+                  Cancel
+                </button>
                 <button
                   type="submit"
                   disabled={creatingTeam}
                   className="px-3 py-1 rounded-md bg-sky-500 text-white hover:bg-sky-600 transition disabled:opacity-50"
                 >
-                  {" "}
-                  {creatingTeam ? "Creating..." : "Create"}{" "}
-                </button>{" "}
-              </div>{" "}
-            </form>{" "}
-          </div>{" "}
+                  {creatingTeam ? "Creating..." : "Create"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
-      {/* Edit Modal */}{" "}
+
+      {/* ================= EDIT MODAL ================= */}
       {isEditModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          {" "}
           <div className="bg-[#0A101F] rounded-xl p-6 w-80">
-            {" "}
             <h3 className="text-white text-lg font-semibold mb-4">
-              {" "}
-              Update Team Name{" "}
-            </h3>{" "}
+              Update Team Name
+            </h3>
             <form onSubmit={handleUpdateTeam} className="flex flex-col gap-3">
-              {" "}
               <input
                 type="text"
                 placeholder="Team name"
                 value={updatedTeamName}
                 onChange={(e) => setUpdatedTeamName(e.target.value)}
                 className="px-3 py-2 rounded-md bg-[#1B2232] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
-              />{" "}
+              />
               <div className="flex justify-end gap-2">
-                {" "}
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
                   className="px-3 py-1 rounded-md bg-gray-700 text-white hover:bg-gray-600 transition"
                 >
-                  {" "}
-                  Cancel{" "}
-                </button>{" "}
+                  Cancel
+                </button>
                 <button
                   type="submit"
                   disabled={updatingTeam}
                   className="px-3 py-1 rounded-md bg-yellow-500 text-white hover:bg-yellow-600 transition disabled:opacity-50"
                 >
-                  {" "}
-                  {updatingTeam ? "Updating..." : "Update"}{" "}
-                </button>{" "}
-              </div>{" "}
-            </form>{" "}
-          </div>{" "}
+                  {updatingTeam ? "Updating..." : "Update"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
