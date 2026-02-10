@@ -310,5 +310,5 @@ http://localhost:5173
 
 ## 👨‍💻 Author
 
-**Your Name**  
+**Syed Mohamid Raza Nadvi**  
 GitHub: [@Sye0x](https://github.com/Sye0x)
