@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api/api";
 import EditTaskModal from "./EditTaskModal";
 
-export default function TasksPanel() {
+export default function TasksPanel({ refreshKey }) {
   const [teams, setTeams] = useState([]);
   const [activeTeam, setActiveTeam] = useState("");
   const [tasks, setTasks] = useState([]);
@@ -42,6 +42,9 @@ export default function TasksPanel() {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    fetchTasksForActiveTeam();
+  }, [refreshKey]);
 
   // Fetch tasks when active team changes
   useEffect(() => {

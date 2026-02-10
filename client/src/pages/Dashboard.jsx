@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const [openModal, setOpenModal] = useState(false);
+  const [tasksUpdated, setTasksUpdated] = useState(false); // new state
   const navigate = useNavigate();
 
   async function handleLogout() {
@@ -15,12 +16,14 @@ export default function Dashboard() {
     navigate("/");
   }
 
+  // Function to toggle the tasksUpdated state
+  const refreshTasks = () => setTasksUpdated((prev) => !prev);
+
   return (
     <div className="min-h-screen bg-linear-to-br from-sky-500 via-black to-sky-500">
       {/* Top Bar */}
       <header className="bg-[#05080E] border-b border-gray-800 px-6 py-4 flex justify-between items-center">
         <h1 className="text-white text-xl font-semibold">Team Task Manager</h1>
-
         <div className="flex gap-3">
           <button
             onClick={() => setOpenModal(true)}
@@ -42,17 +45,23 @@ export default function Dashboard() {
       <div className="grid grid-cols-12 gap-6 p-6">
         {/* Sidebar */}
         <div className="col-span-12 md:col-span-3 space-y-4">
-          <UserPanel /> {/* <-- New User Panel */}
+          <UserPanel />
           <TeamsPanel />
         </div>
 
         {/* Tasks Area */}
         <div className="col-span-12 md:col-span-9">
-          <TasksPanel />
+          <TasksPanel refreshKey={tasksUpdated} />{" "}
+          {/* <-- Pass key to re-fetch */}
         </div>
       </div>
 
-      {openModal && <TaskModal onClose={() => setOpenModal(false)} />}
+      {openModal && (
+        <TaskModal
+          onClose={() => setOpenModal(false)}
+          onTaskCreated={refreshTasks}
+        />
+      )}
     </div>
   );
 }

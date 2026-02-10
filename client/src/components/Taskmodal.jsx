@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/api";
 
-export default function TaskModal({ onClose, onCreated }) {
+export default function TaskModal({ onClose, onTaskCreated }) {
   const [teams, setTeams] = useState([]);
   const [members, setMembers] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -16,7 +16,7 @@ export default function TaskModal({ onClose, onCreated }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  /* 🔹 Fetch logged-in user */
+  // Fetch logged-in user
   useEffect(() => {
     async function fetchMe() {
       const me = await api("/auth/me");
@@ -25,7 +25,7 @@ export default function TaskModal({ onClose, onCreated }) {
     fetchMe();
   }, []);
 
-  /* 🔹 Fetch teams (ONLY owned teams) */
+  // Fetch owned teams
   useEffect(() => {
     if (!currentUserId) return;
 
@@ -33,12 +33,9 @@ export default function TaskModal({ onClose, onCreated }) {
       try {
         setLoadingTeams(true);
         const res = await api("/teams");
-
-        // ✅ FILTER: show only teams owned by user
         const ownedTeams = res.filter(
           (team) => team.owner_id === currentUserId,
         );
-
         setTeams(ownedTeams);
       } catch {
         setTeams([]);
@@ -50,7 +47,7 @@ export default function TaskModal({ onClose, onCreated }) {
     fetchTeams();
   }, [currentUserId]);
 
-  /* 🔹 Fetch members when team changes */
+  // Fetch members when team changes
   useEffect(() => {
     if (!teamId) {
       setMembers([]);
@@ -92,7 +89,7 @@ export default function TaskModal({ onClose, onCreated }) {
         }),
       });
 
-      onCreated?.();
+      onTaskCreated(); // refresh TasksPanel in Dashboard
       onClose();
     } catch {
       setError("Failed to create task");
@@ -109,7 +106,6 @@ export default function TaskModal({ onClose, onCreated }) {
         {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
 
         <div className="space-y-4">
-          {/* Title */}
           <input
             placeholder="Task title"
             value={title}
@@ -118,7 +114,6 @@ export default function TaskModal({ onClose, onCreated }) {
               focus:ring-2 focus:ring-sky-400 outline-none"
           />
 
-          {/* Description */}
           <textarea
             placeholder="Task description (optional)"
             value={description}
@@ -128,7 +123,7 @@ export default function TaskModal({ onClose, onCreated }) {
               focus:ring-2 focus:ring-sky-400 outline-none resize-none"
           />
 
-          {/* Teams (OWNED ONLY) */}
+          {/* Teams */}
           <select
             value={teamId}
             onChange={(e) => setTeamId(e.target.value)}
@@ -138,7 +133,6 @@ export default function TaskModal({ onClose, onCreated }) {
             <option value="">
               {loadingTeams ? "Loading teams..." : "Select your team"}
             </option>
-
             {teams.map((team) => (
               <option key={team.id} value={team.id}>
                 {team.name}
@@ -160,7 +154,6 @@ export default function TaskModal({ onClose, onCreated }) {
                   ? "Loading members..."
                   : "Unassigned"}
             </option>
-
             {members.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.first_name} {m.last_name}
