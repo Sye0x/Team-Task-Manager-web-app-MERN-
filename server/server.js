@@ -14,7 +14,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://team-task-manager-web-app-mern.onrender.com",
+    origin: "https://team-task-manager-web-app-mern.vercel.app",
     credentials: true,
   }),
 );
