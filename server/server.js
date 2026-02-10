@@ -14,7 +14,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://team-task-manager-web-app-mern.onrender.com/",
     credentials: true,
   }),
 );
@@ -38,8 +38,4 @@ app.use("/tasks", taskRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Hello World" });
-});
-
-app.listen(8080, () => {
-  console.log("Server running on http://localhost:8080");
 });
