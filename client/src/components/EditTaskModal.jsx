@@ -10,20 +10,25 @@ export default function EditTaskModal({ task, onClose, onUpdated }) {
 
   const [loading, setLoading] = useState(false);
 
-  /* Fetch members for task team */
+  // Fetch members for the task's team
   useEffect(() => {
     async function fetchMembers() {
-      const res = await api(`/teams/${task.team_id}/members`);
-      setMembers(res);
+      try {
+        const res = await api(`/teams/${task.team_id}/members`);
+        setMembers(res);
+      } catch (err) {
+        console.error("Failed to fetch team members:", err);
+      }
     }
     fetchMembers();
   }, [task.team_id]);
 
+  // Handle updating the task
   async function handleUpdate() {
     try {
       setLoading(true);
 
-      await api(`/tasks/${task.id}`, {
+      const updatedTask = await api(`/tasks/${task.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -33,8 +38,14 @@ export default function EditTaskModal({ task, onClose, onUpdated }) {
         }),
       });
 
-      // call parent callback to refresh panel
-      onUpdated();
+      // Notify parent that task was updated
+      onUpdated(updatedTask);
+
+      // Close the modal
+      onClose();
+    } catch (err) {
+      console.error("Failed to update task:", err);
+      alert("Failed to update task. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -48,9 +59,10 @@ export default function EditTaskModal({ task, onClose, onUpdated }) {
         <div className="space-y-4">
           {/* Title */}
           <input
+            type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="title"
+            placeholder="Title"
             className="w-full bg-black border border-gray-700 rounded-md px-3 py-2 text-sm text-white"
           />
 
@@ -78,8 +90,10 @@ export default function EditTaskModal({ task, onClose, onUpdated }) {
           </select>
         </div>
 
+        {/* Buttons */}
         <div className="flex justify-end gap-3 mt-6">
           <button
+            type="button"
             onClick={onClose}
             className="text-sm text-gray-400 hover:text-white"
           >
@@ -87,11 +101,14 @@ export default function EditTaskModal({ task, onClose, onUpdated }) {
           </button>
 
           <button
+            type="button"
             onClick={handleUpdate}
             disabled={loading}
-            className="bg-sky-500 hover:bg-sky-600 text-white text-sm px-4 py-2 rounded-md"
+            className={`bg-sky-500 hover:bg-sky-600 text-white text-sm px-4 py-2 rounded-md ${
+              loading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
-            Save
+            {loading ? "Saving..." : "Save"}
           </button>
         </div>
       </div>

@@ -15,8 +15,12 @@ export default function TasksPanel({ refreshKey }) {
   // Fetch logged-in user
   useEffect(() => {
     async function fetchMe() {
-      const me = await api("/auth/me");
-      setCurrentUserId(me.id);
+      try {
+        const me = await api("/auth/me");
+        setCurrentUserId(me.id);
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+      }
     }
     fetchMe();
   }, []);
@@ -24,9 +28,13 @@ export default function TasksPanel({ refreshKey }) {
   // Fetch teams
   useEffect(() => {
     async function fetchTeams() {
-      const res = await api("/teams");
-      setTeams(res);
-      if (res.length) setActiveTeam(res[0].id);
+      try {
+        const res = await api("/teams");
+        setTeams(res);
+        if (res.length) setActiveTeam(res[0].id);
+      } catch (err) {
+        console.error("Failed to fetch teams:", err);
+      }
     }
     fetchTeams();
   }, []);
@@ -38,25 +46,29 @@ export default function TasksPanel({ refreshKey }) {
       setLoading(true);
       const res = await api(`/tasks?team_id=${activeTeam}`);
       setTasks(res);
+    } catch (err) {
+      console.error("Failed to fetch tasks:", err);
     } finally {
       setLoading(false);
     }
   };
-  useEffect(() => {
-    fetchTasksForActiveTeam();
-  }, [refreshKey]);
 
-  // Fetch tasks when active team changes
+  // Refresh tasks on refreshKey change
   useEffect(() => {
     fetchTasksForActiveTeam();
-  }, [activeTeam]);
+  }, [refreshKey, activeTeam]);
 
   // Delete task
   async function deleteTask(id) {
     if (!confirm("Delete this task?")) return;
 
-    await api(`/tasks/${id}`, { method: "DELETE" });
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+    try {
+      await api(`/tasks/${id}`, { method: "DELETE" });
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+    } catch (err) {
+      console.error("Failed to delete task:", err);
+      alert("Failed to delete task. Please try again.");
+    }
   }
 
   // Update task after edit
@@ -82,6 +94,7 @@ export default function TasksPanel({ refreshKey }) {
       // Backend sync
       const updated = await api(`/tasks/status/${task.id}`, {
         method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ completed: newCompleted }),
       });
 
@@ -90,8 +103,10 @@ export default function TasksPanel({ refreshKey }) {
         prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)),
       );
     } catch (err) {
+      console.error("Failed to update task status:", err);
       // Rollback on error
       setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)));
+      alert("Failed to update task. Please try again.");
     }
   }
 
@@ -123,6 +138,7 @@ export default function TasksPanel({ refreshKey }) {
 
           {/* Reload button */}
           <button
+            type="button"
             onClick={fetchTasksForActiveTeam}
             className="bg-sky-500 hover:bg-sky-600 text-white text-sm px-3 py-1 rounded-md"
           >
@@ -134,6 +150,7 @@ export default function TasksPanel({ refreshKey }) {
       {/* Tabs */}
       <div className="flex gap-2 mb-4">
         <button
+          type="button"
           onClick={() => setActiveTab("my")}
           className={`px-3 py-1.5 text-xs rounded-md transition ${
             activeTab === "my"
@@ -145,6 +162,7 @@ export default function TasksPanel({ refreshKey }) {
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab("team")}
           className={`px-3 py-1.5 text-xs rounded-md transition ${
             activeTab === "team"
@@ -206,6 +224,7 @@ export default function TasksPanel({ refreshKey }) {
                   {activeTab === "team" && (
                     <>
                       <button
+                        type="button"
                         onClick={() => setEditingTask(task)}
                         className="text-sky-400 text-xs hover:text-sky-300"
                       >
@@ -213,6 +232,7 @@ export default function TasksPanel({ refreshKey }) {
                       </button>
 
                       <button
+                        type="button"
                         onClick={() => deleteTask(task.id)}
                         className="text-red-400 text-xs hover:text-red-300"
                       >
