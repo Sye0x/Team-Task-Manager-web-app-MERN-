@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { api } from "../api/api";
 import { Eye, EyeOff } from "lucide-react";
-import { Router } from "react-router";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -24,7 +25,9 @@ export default function Login() {
       }
 
       setError("");
-      window.location.href = "/dashboard";
+      if (response.success) {
+        navigate("/dashboard");
+      }
     } catch (err) {
       setError("Something went wrong. Please try again.");
     }
@@ -102,13 +105,13 @@ export default function Login() {
         </button>
 
         <p className="text-xs text-center text-gray-500 mt-5">
-          Don’t have an account?{" "}
-          <a
-            href="/register"
+          Don’t have an account?
+          <Link
+            to="/register"
             className="text-sky-600 font-medium hover:underline"
           >
             Create one
-          </a>
+          </Link>
         </p>
       </form>
     </div>

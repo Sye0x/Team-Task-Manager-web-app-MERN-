@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../api/api";
 import { Eye, EyeClosed } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Register() {
   const [firstName, setFirstName] = useState("");
@@ -226,9 +227,12 @@ export default function Register() {
 
         <p className="text-xs text-center text-gray-500 mt-5">
           Already have an account?{" "}
-          <a href="/login" className="text-sky-600 font-medium hover:underline">
+          <Link
+            to="/login"
+            className="text-sky-600 font-medium hover:underline"
+          >
             Sign in
-          </a>
+          </Link>
         </p>
       </form>
     </div>
