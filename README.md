@@ -10,11 +10,7 @@ https://team-task-manager-web-app-mern.vercel.app/
 ```
 
 ---
-
-## Demo
-
-<video src="Demo.mp4" controls width="600"></video>
-
+[![Watch the demo](https://img.youtube.com/vi/B1pVNIa4K_8/maxresdefault.jpg)](https://youtu.be/B1pVNIa4K_8)
 ---
 
 ## 🛠 Tech Stack
