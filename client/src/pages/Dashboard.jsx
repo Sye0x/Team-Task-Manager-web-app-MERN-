@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ important!
 import { api } from "../api/api";
 import TeamsPanel from "../components/TeamsPanel";
 import TasksPanel from "../components/TasksPanel";
@@ -8,18 +7,8 @@ import UserPanel from "../components/UserPanel";
 
 export default function Dashboard() {
   const [openModal, setOpenModal] = useState(false);
-  const navigate = useNavigate();
 
   // ----------------- LOGOUT -----------------
-  async function handleLogout() {
-    try {
-      await api("/auth/logout", { method: "POST" });
-    } catch (err) {
-      console.error("Logout failed:", err);
-    } finally {
-      navigate("/login"); // ✅ safely navigate after logout
-    }
-  }
 
   return (
     <div className="min-h-screen bg-linear-to-br from-sky-500 via-black to-sky-500">
@@ -33,13 +22,6 @@ export default function Dashboard() {
             className="bg-sky-500 hover:bg-sky-600 text-white text-sm px-4 py-2 rounded-md transition"
           >
             + New Task
-          </button>
-
-          <button
-            onClick={handleLogout}
-            className="bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm px-4 py-2 rounded-md transition"
-          >
-            Logout
           </button>
         </div>
       </header>
