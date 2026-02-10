@@ -2,6 +2,12 @@
 
 A full-stack task management application where users can create teams, invite members, and manage tasks collaboratively.
 
+## Demo
+
+<video src="Demo.mp4" controls width="600"></video>
+
+---
+
 ## 🛠 Tech Stack
 
 **Frontend:** React + Vite + Tailwind  
