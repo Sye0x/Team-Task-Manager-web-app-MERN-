@@ -2,6 +2,15 @@
 
 A full-stack task management application where users can create teams, invite members, and manage tasks collaboratively.
 
+---
+
+## Deployed Version
+```
+https://team-task-manager-web-app-mern.vercel.app/
+```
+
+---
+
 ## Demo
 
 <video src="Demo.mp4" controls width="600"></video>
