@@ -1,6 +1,6 @@
 # Team Task Manager
 
-A full-stack task management application where users can create teams, invite members, and manage tasks collaboratively.
+A full-stack task management application where users can create teams, add members(other Users), and manage tasks collaboratively.
 
 ---
 
