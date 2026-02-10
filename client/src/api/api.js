@@ -1,18 +1,17 @@
 const API_URL = "https://team-task-manager-web-server.onrender.com";
 
-export async function api(path, options = {}) {
-  const res = await fetch(`${API_URL}${path}`, {
+export async function api(url, options = {}) {
+  const res = await fetch(import.meta.env.VITE_API_URL + url, {
+    headers: { "Content-Type": "application/json" },
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
     ...options,
   });
 
   const data = await res.json();
 
+  // 👇 IMPORTANT
   if (!res.ok) {
-    throw new Error(data.error || "API error");
+    return data; // return backend error instead of throwing
   }
 
   return data;

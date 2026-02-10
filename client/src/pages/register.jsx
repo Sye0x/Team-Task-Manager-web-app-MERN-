@@ -75,7 +75,7 @@ export default function Register() {
       setConfirmPassword("");
     } catch (err) {
       console.log("Registration error:", err);
-      setError("Something went wrong. Please try again.");
+      setError(err.message); // ✅ THIS IS THE FIX
       setSuccess("");
     }
   }
