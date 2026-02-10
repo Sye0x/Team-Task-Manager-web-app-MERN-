@@ -8,12 +8,10 @@ import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const [openModal, setOpenModal] = useState(false);
-
+  const nav = useNavigate();
   async function handleLogout() {
-    const response = await api("/auth/logout", { method: "POST" });
-    if (response.success) {
-      navigate("/dashboard");
-    }
+    await api("/auth/logout", { method: "POST" });
+    nav("dashboard");
   }
 
   return (
