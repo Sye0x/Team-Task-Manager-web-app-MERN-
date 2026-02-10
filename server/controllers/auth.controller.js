@@ -25,18 +25,31 @@ exports.register = async (req, res) => {
 
     await pool.query(
       "INSERT INTO users (first_name, last_name, email, password) VALUES ($1,$2,$3,$4)",
-      [first_name, last_name, email, hashed],
+      [first_name, last_name, email, hashed]
     );
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
       message: "Registered successfully",
     });
   } catch (err) {
     console.log(err);
-    res.status(400).json({ error: err.message });
+
+    // 🔴 EMAIL ALREADY EXISTS
+    if (err.code === "23505") {
+      return res.status(409).json({
+        success: false,
+        error: "Email is already taken",
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: "Server error",
+    });
   }
 };
+
 
 exports.login = (req, res) => {
   try {

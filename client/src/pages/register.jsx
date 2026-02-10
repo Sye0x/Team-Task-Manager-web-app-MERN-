@@ -60,7 +60,7 @@ export default function Register() {
       });
 
       if (!response.success) {
-        setError("Registration failed. Try a different email.");
+        setError(response.error || "Registration failed");
         setSuccess("");
         return;
       }
@@ -74,7 +74,7 @@ export default function Register() {
       setPassword("");
       setConfirmPassword("");
     } catch (err) {
-      console.log("Registration error: catch", err);
+      console.log("Registration error:", err);
       setError("Something went wrong. Please try again.");
       setSuccess("");
     }
