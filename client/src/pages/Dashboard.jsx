@@ -1,15 +1,24 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ important!
 import { api } from "../api/api";
 import TeamsPanel from "../components/TeamsPanel";
 import TasksPanel from "../components/TasksPanel";
 import TaskModal from "../components/Taskmodal";
-import UserPanel from "../components/UserPanel"; // <-- new import
+import UserPanel from "../components/UserPanel";
 
 export default function Dashboard() {
   const [openModal, setOpenModal] = useState(false);
-  const nav = useNavigate();
+  const navigate = useNavigate();
+
+  // ----------------- LOGOUT -----------------
   async function handleLogout() {
-    await api("/auth/logout", { method: "POST" });
+    try {
+      await api("/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.error("Logout failed:", err);
+    } finally {
+      navigate("/login"); // ✅ safely navigate after logout
+    }
   }
 
   return (
@@ -35,11 +44,11 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Main */}
+      {/* Main Grid */}
       <div className="grid grid-cols-12 gap-6 p-6">
         {/* Sidebar */}
         <div className="col-span-12 md:col-span-3 space-y-4">
-          <UserPanel /> {/* <-- New User Panel */}
+          <UserPanel />
           <TeamsPanel />
         </div>
 
@@ -49,6 +58,7 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* New Task Modal */}
       {openModal && <TaskModal onClose={() => setOpenModal(false)} />}
     </div>
   );
