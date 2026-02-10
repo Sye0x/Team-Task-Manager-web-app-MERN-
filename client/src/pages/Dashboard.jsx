@@ -4,17 +4,15 @@ import TeamsPanel from "../components/TeamsPanel";
 import TasksPanel from "../components/TasksPanel";
 import TaskModal from "../components/Taskmodal";
 import UserPanel from "../components/UserPanel"; // <-- new import
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 export default function Dashboard() {
   const [openModal, setOpenModal] = useState(false);
-  const navigate = useNavigate();
+
   async function handleLogout() {
     try {
-      await api("/auth/logout", { method: "POST" });
+      await api("/auth/logout", { method: "POST" }); // log out on server
     } catch (err) {
       console.error("Logout failed", err);
-    } finally {
-      navigate("/login");
     }
   }
 
@@ -32,12 +30,16 @@ export default function Dashboard() {
             + New Task
           </button>
 
-          <button
-            onClick={handleLogout}
-            className="bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm px-4 py-2 rounded-md transition"
+          <Link
+            to="/login"
+            onClick={async (e) => {
+              e.preventDefault(); // prevent immediate navigation
+              await handleLogout(); // call the async logout
+            }}
+            className="bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm px-4 py-2 rounded-md transition flex items-center justify-center"
           >
             Logout
-          </button>
+          </Link>
         </div>
       </header>
 
