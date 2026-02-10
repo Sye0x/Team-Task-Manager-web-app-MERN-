@@ -4,14 +4,12 @@ import TeamsPanel from "../components/TeamsPanel";
 import TasksPanel from "../components/TasksPanel";
 import TaskModal from "../components/Taskmodal";
 import UserPanel from "../components/UserPanel"; // <-- new import
-import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const [openModal, setOpenModal] = useState(false);
   const nav = useNavigate();
   async function handleLogout() {
     await api("/auth/logout", { method: "POST" });
-    nav("dashboard");
   }
 
   return (
