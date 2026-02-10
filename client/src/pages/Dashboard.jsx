@@ -3,7 +3,7 @@ import { api } from "../api/api";
 import TeamsPanel from "../components/TeamsPanel";
 import TasksPanel from "../components/TasksPanel";
 import UserPanel from "../components/UserPanel"; // <-- new import
-import TaskModal from "../components/TaskModal";
+import TaskModal from "../components/Taskmodal";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
