@@ -1,14 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/api";
 
-interface User {
-  first_name: string;
-  last_name: string;
-  email: string;
-}
-
 export default function UserPanel() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState < null;
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

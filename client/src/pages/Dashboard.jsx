@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api } from "../api/api";
 import TeamsPanel from "../components/TeamsPanel";
 import TasksPanel from "../components/TasksPanel";
-import TaskModal from "../components/TaskModal";
+import TaskModal from "../components/Taskmodal";
 import UserPanel from "../components/UserPanel"; // <-- new import
 
 export default function Dashboard() {

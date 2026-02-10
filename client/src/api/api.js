@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8080";
+const API_URL = "https://team-task-manager-web-server.onrender.com";
 
 export async function api(path, options = {}) {
   const res = await fetch(`${API_URL}${path}`, {
